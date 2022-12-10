@@ -67,7 +67,6 @@ fun getTreeGrid(input: List<String>) : Array<Array<Int>> {
 }
 
 fun getTreesInLineOfSight(x: Int, y: Int, treeGrid: Array<Array<Int>>) : TreesInLineOfSight {
-    val currentTreeHeight = treeGrid[y][x]
     val treesInRow = treeGrid[y]
 
     // Check trees in row
