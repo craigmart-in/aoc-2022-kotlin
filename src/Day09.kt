@@ -74,7 +74,7 @@ fun main() {
     fun part1(input: List<String>): Int {
         var headPosition = Position(0, 0)
         var tailPosition = Position(0, 0)
-        val tailPositions = mutableSetOf<Position>(Position(0, 0))
+        val tailPositionsSet = mutableSetOf<Position>(Position(0, 0))
 
         val moves = getMoves(input)
 
@@ -87,7 +87,7 @@ fun main() {
                 if (!isTailNearHead(headPosition, tailPosition)) {
                     println("Tail is not touching.")
                     tailPosition = moveTailNearHead(headPosition, tailPosition)
-                    tailPositions.add(tailPosition)
+                    tailPositionsSet.add(tailPosition)
                 }
 
                 println("After move: Head: $headPosition; Tail: $tailPosition")
@@ -95,11 +95,39 @@ fun main() {
             }
         }
 
-        return tailPositions.size
+        return tailPositionsSet.size
     }
 
     fun part2(input: List<String>): Int {
-        return input.size
+        var headPosition = Position(0, 0)
+        var knotPositions = Array(9) {Position(0, 0)}
+        val tailPositionsSet = mutableSetOf(Position(0, 0))
+
+        val moves = getMoves(input)
+
+        moves.forEach {
+            for (step in 0 until it.steps) {
+                //println("$it; Step ${step + 1} of ${it.steps}; Head: $headPosition; Tail: $tailPosition")
+                headPosition = it.move(headPosition)
+
+                if (!isTailNearHead(headPosition, knotPositions[0])) {
+                    knotPositions[0] = moveTailNearHead(headPosition, knotPositions[0])
+                }
+
+                for (knot in 1 until 8) {
+                    if (!isTailNearHead(knotPositions[knot - 1], knotPositions[knot])) {
+                        knotPositions[knot] = moveTailNearHead(knotPositions[knot - 1], knotPositions[knot])
+                    }
+                }
+
+                if (!isTailNearHead(knotPositions[7], knotPositions[8])) {
+                    knotPositions[8] = moveTailNearHead(knotPositions[7], knotPositions[8])
+                    tailPositionsSet.add(knotPositions[8])
+                }
+            }
+        }
+
+        return tailPositionsSet.size
     }
 
     val test1 = moveTailNearHead(Position(3, 4), Position(2, 2))
@@ -108,6 +136,9 @@ fun main() {
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day09_test")
     check(part1(testInput) == 13)
+
+    val testInput2 = readInput("Day09_test2")
+    check(part2(testInput2) == 36)
 
     val input = readInput("Day09")
     println(part1(input))
