@@ -1,3 +1,4 @@
+import java.lang.NullPointerException
 import java.util.PriorityQueue
 import kotlin.math.abs
 
@@ -86,6 +87,53 @@ fun main() {
         map.print()
     }
 
+    fun findShortestPath(
+        startPosition: Position,
+        endPosition: Position,
+        map: Array<Array<Char>>
+    ): List<Position> {
+        var frontier = PriorityQueue<Position>()
+        frontier.add(startPosition)
+
+        val cameFrom = mutableMapOf<Position, Position?>()
+        cameFrom[startPosition] = null
+
+        val countSoFar = mutableMapOf<Position, Int>()
+        countSoFar[startPosition] = 0
+
+        while (frontier.isNotEmpty()) {
+            val current = frontier.poll()
+
+            if (current == endPosition) {
+                break
+            }
+
+            for (next in map.getNeighbors(current)) {
+                val newCost = countSoFar[current]?.plus(1) ?: 1
+                if (!cameFrom.contains(next) || newCost < countSoFar[next]!!) {
+                    countSoFar[next] = newCost
+                    val nextPriority =
+                        Position(next.x, next.y, next.value, next.direction, newCost + heuristic(endPosition, next))
+                    frontier.add(nextPriority)
+                    cameFrom[nextPriority] = current
+                }
+            }
+        }
+
+        val path = mutableListOf<Position>()
+        var currentPath = endPosition
+        while (currentPath != startPosition) {
+            path.add(currentPath)
+            try {
+                currentPath = cameFrom[currentPath]!!
+            }
+            catch (e: NullPointerException) {
+                return listOf<Position>()
+            }
+        }
+        return path
+    }
+
     fun part1(input: List<String>): Int {
         val height = input.size
         val width = input[0].length
@@ -109,39 +157,7 @@ fun main() {
 
         map.print()
 
-        var frontier = PriorityQueue<Position>()
-        frontier.add(startPosition)
-
-        val cameFrom = mutableMapOf<Position, Position?>()
-        cameFrom[startPosition] = null
-
-        val countSoFar = mutableMapOf<Position, Int>()
-        countSoFar[startPosition] = 0
-
-        while (frontier.isNotEmpty()) {
-            val current = frontier.poll()
-
-            if (current == endPosition) {
-                break
-            }
-
-            for (next in map.getNeighbors(current)) {
-                val newCost = countSoFar[current]?.plus(1) ?: 1
-                if (!cameFrom.contains(next) || newCost < countSoFar[next]!!) {
-                    countSoFar[next] = newCost
-                    val nextPriority = Position(next.x, next.y, next.value, next.direction, newCost + heuristic(endPosition, next))
-                    frontier.add(nextPriority)
-                    cameFrom[nextPriority] = current
-                }
-            }
-        }
-
-        val path = mutableListOf<Position>()
-        var currentPath = endPosition
-        while (currentPath != startPosition) {
-            path.add(currentPath)
-            currentPath = cameFrom[currentPath]!!
-        }
+        val path = findShortestPath(startPosition, endPosition, map)
 
         printPath(height, width, path)
 
@@ -149,12 +165,47 @@ fun main() {
     }
 
     fun part2(input: List<String>): Int {
-        return input.size
+        val height = input.size
+        val width = input[0].length
+        val map = Array(height) {Array(width) {'.'} }
+
+        val startPositions = mutableListOf<Position>()
+        var endPosition = Position(0, 0, ' ', 'E', 0)
+
+        for ((y, line) in input.withIndex()) {
+            for ((x, square) in line.toCharArray().withIndex()) {
+                if (square == 'S' || square == 'a') {
+                    startPositions.add(Position(x, y, square, square, 0))
+                }
+                if (square == 'E') {
+                    endPosition = Position(x, y, square, square, 0)
+                }
+
+                map[y][x] = square
+            }
+        }
+
+        map.print()
+
+        var shortestPath = listOf<Position>()
+
+        for (startPosition in startPositions) {
+            val path = findShortestPath(startPosition, endPosition, map)
+            if (path.isEmpty()) continue
+            if (shortestPath.isEmpty() || path.size < shortestPath.size) {
+                shortestPath = path
+            }
+        }
+
+        printPath(height, width, shortestPath)
+
+        return shortestPath.size
     }
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day12_test")
     check(part1(testInput) == 31)
+    check(part2(testInput) == 29)
 
     val input = readInput("Day12")
     println(part1(input))
